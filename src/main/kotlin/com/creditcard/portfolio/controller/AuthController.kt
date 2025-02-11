@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/auth")
 class AuthController(
     private val authService: AuthService,
+    private val authUserRepository: AuthUserRepository,
     private val authenticationManager: AuthenticationManager // ✅ Spring Security AuthenticationManager 주입
 ) {
 
@@ -31,6 +32,22 @@ class AuthController(
         } else {
             ResponseEntity.status(401).body("🚨 로그인되지 않음")
         }
+    }
+
+    @GetMapping("/me")
+    fun getCurrentUser(): ResponseEntity<Any> {
+        val authentication = SecurityContextHolder.getContext().authentication
+
+        if (authentication == null || authentication.name == "anonymousUser") {
+            return ResponseEntity.status(401).body("🚨 인증되지 않은 사용자입니다.")
+        }
+
+        val authUser = authUserRepository.findBySiteId(authentication.name).orElse(null)
+        if (authUser != null) {
+            return ResponseEntity.ok(authUser.siteUser) // ✅ SiteUser 정보 반환
+        }
+
+        return ResponseEntity.status(404).body("🚨 사용자 정보를 찾을 수 없습니다.")
     }
 
 }

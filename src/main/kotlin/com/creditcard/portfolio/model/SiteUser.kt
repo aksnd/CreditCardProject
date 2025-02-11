@@ -1,9 +1,11 @@
 package com.creditcard.portfolio
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import jakarta.persistence.*
 
 @Entity
 @Table(name = "site_users")
+@JsonIgnoreProperties("authUser")
 data class SiteUser(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
