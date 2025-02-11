@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Management</title>
+    <script>
+        async function changeUserData() {
+            const userId = document.getElementById("userId").value;
+            if (!userId || userId<=0) return;
+
+            const response = await fetch(`/users/${userId}`);
+            if (!response.ok) {
+                alert("유저 정보를 가져올 수 없습니다.");
+                return;
+            }
+            const user = await response.json();
+            document.getElementById("currentUserId").textContent = user.id;
+            fetchUserData();
+
+
+        }
+
+        async function fetchUserData() {
+            const userId = parseFloat(document.getElementById("currentUserId").textContent);
+            if (!userId || userId<=0) return;
+
+            const response = await fetch(`/users/${userId}`);
+            if (!response.ok) {
+                alert("유저 정보를 가져올 수 없습니다.");
+                return;
+            }
+            const user = await response.json();
+
+            document.getElementById("currentUserId").textContent = user.id;
+            document.getElementById("currentUserName").textContent = user.name;
+            document.getElementById("currentDebt").textContent = user.debt;
+            document.getElementById("currentInterest").textContent = user.interestRate;
+            document.getElementById("currentIncome").textContent = user.income;
+            document.getElementById("currentExpense").textContent = user.expense;
+        }
+
+        async function updateDebt() {
+            const userId = parseFloat(document.getElementById("currentUserId").textContent);
+            const newDebt = document.getElementById("newDebt").value;
+            await fetch(`/users/${userId}/debt?newDebt=${newDebt}`, { method: "PUT" });
+            fetchUserData();
+        }
+
+        async function updateInterest() {
+            const userId = parseFloat(document.getElementById("currentUserId").textContent);
+            const newInterest = document.getElementById("newInterest").value;
+            await fetch(`/users/${userId}/interest?newInterest=${newInterest}`, { method: "PUT" });
+            fetchUserData();
+        }
+
+        async function updateIncomeExpense() {
+            const userId = parseFloat(document.getElementById("currentUserId").textContent);
+            const income = document.getElementById("income").value;
+            const expense = document.getElementById("expense").value;
+            await fetch(`/users/${userId}/income-expense?income=${income}&expense=${expense}`, { method: "PUT" });
+            fetchUserData();
+        }
+
+        async function applyMonthlyUpdate() {
+            const userId = parseFloat(document.getElementById("currentUserId").textContent);
+            await fetch(`/users/${userId}/apply-month`, { method: "POST" });
+            fetchUserData();
+        }
+
+        async function simulator(){
+            const userId = parseFloat(document.getElementById("currentUserId").textContent);
+            const monthlyIncome = document.getElementById("monthlyIncome").value;
+            const monthlyExpense = document.getElementById("monthlyExpense").value;
+            const response = await fetch(`/users/${userId}/simulation?monthlyIncome=${monthlyIncome}&monthlyExpense=${monthlyExpense}`);
+
+            const monthsText = await response.text();
+            const months = parseInt(monthsText, 10); // 문자열을 정수로 변환
+
+            if (isNaN(months)) {
+                document.getElementById("simulatorResult").innerHTML =
+                    `<h3>올바른 입력이 아닙니다</h3>`;
+            }
+            else if (months === -1) {
+                document.getElementById("simulatorResult").innerHTML =
+                    `<h3>❌ 빚을 갚을 수 없습니다. (소득이 이자보다 낮음)</h3>`;
+            } else {
+                document.getElementById("simulatorResult").innerHTML =
+                    `<h3>✅ 총 ${months}개월 후에 빚을 다 갚을 수 있습니다!</h3>`;
+            }
+        }
+    </script>
+</head>
+<body onload="changeUserData()">
+<h1>리볼빙 Management</h1>
+
+<label>사용자 ID:</label>
+<input type="number" id="userId" placeholder="User ID">
+<button onclick="changeUserData()">유저 조회</button>
+<h2>현재 정보</h2>
+<p>유저 ID: <span id="currentUserId">-</span></p>
+<p>유저 이름: <span id="currentUserName">-</span></p>
+<p>현재 빚: <span id="currentDebt">-</span></p>
+<p>이자율: <span id="currentInterest">-</span></p>
+<p>이번 달 소득: <span id="currentIncome">-</span></p>
+<p>이번 달 소비: <span id="currentExpense">-</span></p>
+
+
+<h2>1. 빚 수정</h2>
+<input type="number" id="newDebt" placeholder="빚 액수 입력">
+<button onclick="updateDebt()">빚 수정</button>
+<input type="number" id="newInterest" placeholder="이자율 입력">
+<button onclick="updateInterest()">이자율 수정</button>
+
+
+<h2>2. 이번 달 소득 & 소비 입력</h2>
+<h3>소득</h3>
+<input type="number" id="income" placeholder="소득 입력">
+<h3>소비</h3>
+<input type="number" id="expense" placeholder="소비 입력">
+<button onclick="updateIncomeExpense()">소득 & 소비 입력</button>
+
+
+
+<h2>3. 1달 보내기</h2>
+<button onclick="applyMonthlyUpdate()">1달 보내기</button>
+</body>
+</html>
+
+<h2>4. 시뮬레이터</h2>
+<h3>월 소득(시뮬용)</h3>
+<input type="number" id="monthlyIncome" placeholder="월 소득 입력">
+<h3>월 소비(시뮬용)</h3>
+<input type="number" id="monthlyExpense" placeholder="월 소비 입력">
+<button onclick="simulator()">시뮬레이션 시작</button>
+
+<div id="simulatorResult"></div>

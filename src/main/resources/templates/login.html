@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+</head>
+<body>
+
+<h1>로그인</h1>
+
+<label>아이디:</label>
+<input type="text" id="siteId" placeholder="아이디 입력">
+<br>
+
+<label>비밀번호:</label>
+<input type="password" id="password" placeholder="비밀번호 입력">
+<br>
+
+<button onclick="login()">로그인</button>
+<button onclick="location.href='/register'">회원가입</button> <!-- 회원가입 페이지로 이동 -->
+
+<script>
+    async function login() {
+        const siteId = document.getElementById("siteId").value;
+        const password = document.getElementById("password").value;
+
+        const response = await fetch("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ siteId, password })
+        });
+
+        if (response.ok) {
+            alert("✅ 로그인 성공입니다!!");
+            window.location.href = "/main"; // ✅ 로그인 성공 시 메인 페이지로 이동
+        } else {
+            alert("🚨 로그인 실패! 아이디 또는 비밀번호를 확인하세요.");
+        }
+    }
+</script>
+
+</body>
+</html>
