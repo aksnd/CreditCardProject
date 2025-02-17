@@ -1,8 +1,8 @@
 package com.creditcard.portfolio
 
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.authentication.*
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
@@ -20,9 +20,25 @@ class AuthController(
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody request: LoginRequest): ResponseEntity<String> {
-        return ResponseEntity.ok(authService.loginUser(request.siteId, request.password))
+    fun login(@RequestBody request: LoginRequest): ResponseEntity<Any> {
+        return try {
+            val responseMessage = authService.loginUser(request.siteId, request.password)
+            ResponseEntity.ok(mapOf("message" to responseMessage))
+        } catch (e: BadCredentialsException) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(mapOf("error" to "❌ 로그인 실패: 아이디 또는 비밀번호가 올바르지 않습니다."))
+        } catch (e: DisabledException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(mapOf("error" to "❌ 로그인 실패: 계정이 비활성화되었습니다."))
+        } catch (e: LockedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(mapOf("error" to "❌ 로그인 실패: 계정이 잠겼습니다."))
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(mapOf("error" to "❌ 로그인 실패: 서버 오류 발생 (${e.message})"))
+        }
     }
+
 
     @GetMapping("/check-auth")
     fun checkAuth(): ResponseEntity<Any> {

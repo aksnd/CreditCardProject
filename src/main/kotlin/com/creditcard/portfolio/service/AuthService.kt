@@ -1,8 +1,7 @@
 package com.creditcard.portfolio
 
 import jakarta.transaction.Transactional
-import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.authentication.*
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -18,17 +17,29 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder = BCryptPasswordEncoder()
 
     fun loginUser(siteId: String, password: String): String {
-        val authToken = UsernamePasswordAuthenticationToken(siteId, password)
+        return try {
+            val authToken = UsernamePasswordAuthenticationToken(siteId, password)
 
-        // 🔥 인증 수행
-        val authentication = authenticationManager.authenticate(authToken)
+            // 🔥 인증 수행 (실패 시 예외 발생)
+            val authentication = authenticationManager.authenticate(authToken)
 
-        // ✅ SecurityContextHolder에 인증 정보 저장
-        SecurityContextHolder.getContext().authentication = authentication
+            // ✅ SecurityContextHolder에 인증 정보 저장
+            SecurityContextHolder.getContext().authentication = authentication
 
-        println("로그인 성공! authentication 확인${authentication.name}")
-        return "✅ 로그인 성공!"
+            println("로그인 성공! authentication 확인: ${authentication.name}")
+            "✅ 로그인 성공! 유저: ${authentication.name}"
+
+        } catch (e: BadCredentialsException) {
+            throw BadCredentialsException("❌ 로그인 실패: 아이디 또는 비밀번호가 올바르지 않습니다.")
+        } catch (e: DisabledException) {
+            throw DisabledException("❌ 로그인 실패: 계정이 비활성화되었습니다.")
+        } catch (e: LockedException) {
+            throw LockedException("❌ 로그인 실패: 계정이 잠겼습니다.")
+        } catch (e: Exception) {
+            throw RuntimeException("❌ 로그인 실패: 서버 오류 발생 (${e.message})")
+        }
     }
+
 
     fun registerUser(siteId: String, password: String, name: String): String {
         if (authUserRepository.findBySiteId(siteId).isPresent) {
